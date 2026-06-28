@@ -1,0 +1,59 @@
+# Codemagic 配置 - 节拍器 App
+# 将此文件放到仓库根目录，命名为 codemagic.yaml
+# 在 Codemagic 中关联 GitHub 仓库后，推送代码自动触发编译
+
+workflows:
+  ios-build:
+    name: 编译节拍器 IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      groups:
+        # 在 Codemagic UI 中设置：Team > Environment variables
+        # APP_STORE_CONNECT_ISSUER_ID
+        # APP_STORE_CONNECT_KEY_IDENTIFIER
+        # APP_STORE_CONNECT_PRIVATE_KEY
+        # CERTIFICATE_PRIVATE_KEY
+        - app_store_credentials
+      vars:
+        APP_ID: com.nova.metronome
+        BUNDLE_ID: com.nova.metronome
+        XCODE_WORKSPACE: ios/Runner.xcworkspace
+        XCODE_SCHEME: Runner
+      flutter: 3.44.4
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+    scripts:
+      - name: 获取依赖
+        script: |
+          flutter packages pub get
+      - name: 安装 Pods
+        script: |
+          cd ios && pod install && cd ..
+      - name: 清理旧的构建
+        script: |
+          flutter clean
+      - name: 构建 IPA
+        script: |
+          flutter build ios --release --no-codesign
+      - name: 制作 .ipa 包
+        script: |
+          mkdir -p build/ios/ipa/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cd build/ios/ipa
+          zip -r ../../../metronome.ipa Payload/
+          cd ../../../
+    artifacts:
+      - metronome.ipa
+      - build/ios/iphoneos/Runner.app
+    publishing:
+      email:
+        recipients:
+          - your@email.com

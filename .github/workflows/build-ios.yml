@@ -1,0 +1,43 @@
+name: 编译节拍器 IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # 支持手动触发
+
+jobs:
+  build-ios:
+    name: 编译 iOS .ipa
+    runs-on: macos-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: 'stable'
+
+      - name: 获取依赖
+        run: flutter pub get
+
+      - name: 安装 Pods
+        run: cd ios && pod install && cd ..
+
+      - name: 编译 Release
+        run: flutter build ios --release --no-codesign
+
+      - name: 打包 .ipa
+        run: |
+          mkdir -p build/ios/ipa/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cd build/ios/ipa
+          zip -r ../../../DidaDida.ipa Payload/
+
+      - name: 上传 .ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: DidaDida-ipa
+          path: DidaDida.ipa
