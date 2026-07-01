@@ -1,7 +1,7 @@
 name: metronome_app
 description: 架子鼓和尤克里里专用节拍器 - 免费自用版
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+1
 
 environment:
   sdk: ^3.0.0
