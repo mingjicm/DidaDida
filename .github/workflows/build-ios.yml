@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  VERSION: '1.1.0'
+  BUILD: ${{ github.run_number }}
+
 jobs:
   build-ios:
     name: 编译 iOS .ipa
@@ -28,13 +32,15 @@ jobs:
 
       - name: 打包 .ipa
         run: |
+          IPANAME="DidaDida_v${VERSION}+${BUILD}.ipa"
           mkdir -p build/ios/ipa/Payload
           cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa
-          zip -r ../../../DidaDida.ipa Payload/
+          zip -r "${GITHUB_WORKSPACE}/${IPANAME}" Payload/
+          echo "IPA_FILE=${IPANAME}" >> $GITHUB_ENV
 
       - name: 上传 .ipa
         uses: actions/upload-artifact@v4
         with:
-          name: DidaDida-ipa
-          path: DidaDida.ipa
+          name: DidaDida_v${{ env.VERSION }}+${{ env.BUILD }}
+          path: ${{ github.workspace }}/DidaDida_v${{ env.VERSION }}+${{ env.BUILD }}.ipa
