@@ -5,7 +5,6 @@ import '../widgets/beat_indicator.dart';
 import '../widgets/bpm_control.dart';
 import '../widgets/transport_controls.dart';
 import '../widgets/time_signature_picker.dart';
-import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final MetronomeEngine engine;
@@ -140,9 +139,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ListView(
                       controller: scrollCtrl,
                       children: [
-                        _presetSection('架子鼓', '架子鼓', ctx),
-                        const SizedBox(height: 12),
-                        _presetSection('尤克里里', '尤克里里', ctx),
+                        for (final cat in presetCategories)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _presetSection(cat, ctx),
+                          ),
                       ],
                     ),
                   ),
@@ -155,12 +156,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _presetSection(String title, String category, BuildContext ctx) {
+  Widget _presetSection(String category, BuildContext ctx) {
     final items = presetsByCategory(category);
+    if (items.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+        Text(category, style: const TextStyle(fontSize: 14, color: Colors.grey)),
         const SizedBox(height: 8),
         ...items.map((p) => Card(
           margin: const EdgeInsets.only(bottom: 6),
@@ -269,17 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.settings_outlined),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SettingsScreen(engine: widget.engine),
-                        ),
-                      );
-                    },
-                  ),
+                  const SizedBox(width: 48), // spacer to balance
                 ],
               ),
             ),
@@ -296,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 32),
 
             // BPM control
-            BpmControl(bpm: _bpm, onChanged: _updateBpm),
+            BpmControl(bpm: _bpm, onChanged: _updateBpm, activePreset: _activePreset),
 
             const SizedBox(height: 32),
 

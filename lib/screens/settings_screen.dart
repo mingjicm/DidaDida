@@ -122,6 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     SoundScheme.classic => '经典滴答',
                     SoundScheme.wood => '木鱼声',
                     SoundScheme.electronic => '电子音',
+                    SoundScheme.drumKit => '架子鼓',
                   };
                   final isSelected = _soundScheme == s;
                   return ChoiceChip(
@@ -131,6 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (v) {
                         setState(() => _soundScheme = s);
                         widget.engine.soundScheme = s;
+                        widget.engine.reloadSounds();
                       }
                     },
                   );

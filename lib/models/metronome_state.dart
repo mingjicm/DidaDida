@@ -72,4 +72,4 @@ class MetronomeState {
   double get intervalMs => 60000.0 / bpm;
 }
 
-enum SoundScheme { classic, wood, electronic }
+enum SoundScheme { classic, wood, electronic, drumKit }

@@ -12,6 +12,7 @@ class MetronomeEngine {
 
   final AudioPlayer _accentPlayer = AudioPlayer();
   final AudioPlayer _normalPlayer = AudioPlayer();
+  final AudioPlayer _drumPlayer = AudioPlayer();
 
   bool _isPlaying = false;
   bool _isPaused = false;
@@ -33,16 +34,44 @@ class MetronomeEngine {
   void Function()? onPlayStateChanged;
 
   Future<void> init() async {
-    await _accentPlayer.setSource(AssetSource('sounds/click_high.wav'));
-    await _normalPlayer.setSource(AssetSource('sounds/click_low.wav'));
+    await _loadSounds();
     _accentPlayer.setVolume(volume);
     _normalPlayer.setVolume(volume * 0.7);
+    _drumPlayer.setVolume(volume);
+  }
+
+  Future<void> _loadSounds() async {
+    switch (soundScheme) {
+      case SoundScheme.classic:
+        await _accentPlayer.setSource(AssetSource('sounds/click_high.wav'));
+        await _normalPlayer.setSource(AssetSource('sounds/click_low.wav'));
+        break;
+      case SoundScheme.wood:
+        await _accentPlayer.setSource(AssetSource('sounds/click_high.wav'));
+        await _normalPlayer.setSource(AssetSource('sounds/click_low.wav'));
+        break;
+      case SoundScheme.electronic:
+        await _accentPlayer.setSource(AssetSource('sounds/rim.wav'));
+        await _normalPlayer.setSource(AssetSource('sounds/click_low.wav'));
+        break;
+      case SoundScheme.drumKit:
+        await _drumPlayer.setSource(AssetSource('sounds/kick.wav'));
+        await _accentPlayer.setSource(AssetSource('sounds/snare.wav'));
+        await _normalPlayer.setSource(AssetSource('sounds/hihat.wav'));
+        break;
+    }
+  }
+
+  Future<void> reloadSounds() async {
+    if (_disposed) return;
+    await _loadSounds();
   }
 
   void setVolume(double v) {
     volume = v;
     _accentPlayer.setVolume(v);
     _normalPlayer.setVolume(v * 0.7);
+    _drumPlayer.setVolume(v);
   }
 
   void play() {
@@ -98,7 +127,28 @@ class MetronomeEngine {
 
   Future<void> _playBeat(int beatIndex, bool isAccent) async {
     try {
-      if (isAccent && accentEnabled) {
+      if (soundScheme == SoundScheme.drumKit) {
+        // Drum kit mode: different drums for different beats
+        if (beatIndex == 0) {
+          // Beat 1 = Kick + Snare accent
+          HapticFeedback.heavyImpact();
+          await _drumPlayer.stop();
+          await _drumPlayer.play(AssetSource('sounds/kick.wav'));
+          final snare = AudioPlayer();
+          await snare.setSource(AssetSource('sounds/snare.wav'));
+          snare.setVolume(volume * 0.6);
+          await snare.resume();
+        } else if (beatIndex % 2 == 0) {
+          // Even beats = Snare (backbeat)
+          if (vibrateEnabled) HapticFeedback.lightImpact();
+          await _accentPlayer.stop();
+          await _accentPlayer.play(AssetSource('sounds/snare.wav'));
+        } else {
+          // Odd beats = Hi-hat
+          await _normalPlayer.stop();
+          await _normalPlayer.play(AssetSource('sounds/hihat.wav'));
+        }
+      } else if (isAccent && accentEnabled) {
         HapticFeedback.heavyImpact();
         await _accentPlayer.stop();
         await _accentPlayer.play(AssetSource('sounds/click_high.wav'));
@@ -157,5 +207,6 @@ class MetronomeEngine {
     stop();
     _accentPlayer.dispose();
     _normalPlayer.dispose();
+    _drumPlayer.dispose();
   }
 }
